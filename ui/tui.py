@@ -11,6 +11,7 @@ from rich.panel import Panel
 from rich import box
 from rich.syntax import Syntax
 
+from config.config import Config
 from utils.paths import display_path_rel_to_cwd
 
 # Rich allows us to define named styles that can be reused throughout the UI.
@@ -93,6 +94,7 @@ class TUI:
 
     def __init__(
         self,
+        config: Config,
         console: Console | None = None,
     ) -> None:
         # Use the Console passed by the CLI if one is provided.
@@ -111,8 +113,10 @@ class TUI:
         # Remember each tool call's arguments so we can display them when that tool call completes.
         self._tool_args_by_tool_call_id: dict[str, dict[str, Any]] = {}
 
+        self.config = config
+
         # Current working directory
-        self.cwd = Path.cwd()
+        self.cwd = self.config.cwd
 
     def begin_assistant(self) -> None:
         """

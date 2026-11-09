@@ -45,7 +45,7 @@ class CLI:
 
         # The TUI is responsible for rendering messages, tool calls,
         # results, errors, approval prompts, etc.
-        self.tui = TUI(console)
+        self.tui = TUI(config, console)
 
         # Reference to the event loop running our interactive session.
         # The Ctrl+C handler uses it to schedule cancellation of the
@@ -125,7 +125,7 @@ class CLI:
             "NOVA CODE",
             lines=[
                 f"model: {self.config.model_name}",
-                f"cwd: {Path.cwd()}",
+                f"cwd: {self.config.cwd}",
                 "commands: /help /config /approval /model /exit",
             ],
         )

@@ -126,7 +126,7 @@ class Agent:
             result = await self.tool_registry.invoke(
                 tool_call.tool_name,
                 tool_call.arguments,
-                Path.cwd(),
+                self.config.cwd,
             )
 
             # Yield the result of the tool call
