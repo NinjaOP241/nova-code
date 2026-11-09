@@ -11,10 +11,12 @@ from config.config import Config
 from utils.errors import ConfigError
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 CONFIG_FILE_NAME = "config.toml"
 AGENT_MD_FILE = "AGENT.MD"
+
 
 def get_config_dir() -> Path:
     r"""
@@ -30,9 +32,10 @@ def get_config_dir() -> Path:
         C:\Users\USER\AppData\Local\nova-code
     """
 
-    return Path(user_config_dir("nova-code"))
+    return Path(user_config_dir("nova-code", appauthor=False))
 
-def get_system_config_path() -> Path: 
+
+def get_system_config_path() -> Path:
     """
     Build the path to the user's system-wide configuration file.
 
@@ -42,8 +45,9 @@ def get_system_config_path() -> Path:
 
     return get_config_dir() / CONFIG_FILE_NAME
 
+
 def _parse_toml(path: Path) -> dict[str, Any]:
-    """ Read a TOML file and convert it into a Python dictionary. """
+    """Read a TOML file and convert it into a Python dictionary."""
 
     try:
         with open(path, "rb") as f:
@@ -102,9 +106,10 @@ def _get_agent_md_files(cwd: Path) -> str | None:
 
     return None
 
+
 def _merge_dicts(
-        base: dict[str, Any],
-        override: dict[str, Any],
+    base: dict[str, Any],
+    override: dict[str, Any],
 ):
     """
     Merge two configuration dictionaries, giving priority to override.
@@ -192,9 +197,8 @@ def load_config(cwd: Path | None) -> Config:
     if "cwd" not in config_dict:
         config_dict["cwd"] = cwd
 
-    
     # ---------------------------------------------------------
-    # 4. Load AGENT.MD as developer instructions 
+    # 4. Load AGENT.MD as developer instructions
     # ---------------------------------------------------------
     if "developer_instructions" not in config_dict:
         agent_md_content = _get_agent_md_files(cwd)

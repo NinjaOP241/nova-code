@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from config.config import Config
 from prompts.system import get_system_prompt
 from utils.text import count_tokens
 
@@ -66,9 +67,10 @@ class MessageItem:
 
 
 class ContextManager:
-    def __init__(self) -> None:
+    def __init__(self, config: Config) -> None:
         self._system_prompt = get_system_prompt()
-        self._model_name = "cohere/north-mini-code:free"
+        self.config = config
+        self._model_name = config.model_name
 
         # Actual conversation history.
         #
