@@ -1,0 +1,9 @@
+anyio
+click
+openai
+platformdirs
+pydantic
+python-dotenv
+rich
+tiktoken
+tomli
