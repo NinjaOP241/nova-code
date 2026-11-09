@@ -180,7 +180,7 @@ class CLI:
         if self.agent is None:
             return None
 
-        tool = self.agent.tool_registry.get(tool_name)
+        tool = self.agent.session.tool_registry.get(tool_name)
 
         if tool is None:
             return None

@@ -1,13 +1,10 @@
 import json
-from pathlib import Path
 from typing import AsyncGenerator
 
 from agent.events import AgentEvent, AgentEventType
-from client.llm_client import LLMClient
+from agent.session import Session
 from client.response import StreamEventType, ToolCall
 from config.config import Config
-from context.manager import ContextManager
-from tools.registry import create_default_registry
 
 
 class Agent:
@@ -17,9 +14,7 @@ class Agent:
 
     def __init__(self, config: Config):
         self.config = config
-        self.client = LLMClient(config)
-        self.context_manager = ContextManager(config)
-        self.tool_registry = create_default_registry()
+        self.session: Session | None = Session(config)
 
     async def run(self, message: str) -> AsyncGenerator[AgentEvent, None]:
         """
@@ -32,7 +27,7 @@ class Agent:
         yield AgentEvent.agent_start(message)
 
         # Add the user's message to the context manager to keep track of the conversation history.
-        self.context_manager.add_user_message(message)
+        self.session.context_manager.add_user_message(message)
 
         final_response: str | None = None
 
@@ -55,18 +50,20 @@ class Agent:
         max_turns = self.config.max_turns
 
         for turn in range(max_turns):
+            self.session.increment_turn()
+
             # Collect all text chunks belonging to this LLM response.
             response_text = ""
 
             # Get the schemas of all tools currently available to the Agent.
-            tool_schemas = self.tool_registry.get_schemas()
+            tool_schemas = self.session.tool_registry.get_schemas()
 
             # Collect all the tool calls requested by the LLM, so that we can execute them later on
             tool_calls: list[ToolCall] = []
 
             # Send the conversation history and available tools to the LLM.
-            async for event in self.client.chat_completion(
-                self.context_manager.get_messages(),
+            async for event in self.session.client.chat_completion(
+                self.session.context_manager.get_messages(),
                 tools=tool_schemas if tool_schemas else None,
             ):
                 # The LLM is streaming normal assistant text.
@@ -94,7 +91,7 @@ class Agent:
             # If the assistant requested tools, we must also save those
             # requests. This lets the LLM see which tools it previously called
             # when we send the tool results in the next turn.
-            self.context_manager.add_assistant_message(
+            self.session.context_manager.add_assistant_message(
                 response_text or None,
                 (
                     [
@@ -132,7 +129,7 @@ class Agent:
                 )
 
                 # Execute the tool call and get the result.
-                result = await self.tool_registry.invoke(
+                result = await self.session.tool_registry.invoke(
                     tool_call.tool_name,
                     tool_call.arguments,
                     self.config.cwd,
@@ -146,7 +143,7 @@ class Agent:
                 )
 
                 # Save the result of the tool call to the conversation history, so that the LLM can use these results as context in the next LLM request.
-                self.context_manager.add_tool_result(
+                self.session.context_manager.add_tool_result(
                     tool_call.tool_call_id,
                     result.to_model_output(),
                 )
@@ -170,6 +167,6 @@ class Agent:
         Called automatically when the block exits, whether normally
         or because of an exception.
         """
-        if self.client:
-            await self.client.close()
-            self.client = None
+        if self.session and self.session.client:
+            await self.session.client.close()
+            self.session = None
