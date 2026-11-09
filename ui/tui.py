@@ -13,6 +13,7 @@ from rich.syntax import Syntax
 
 from config.config import Config
 from utils.paths import display_path_rel_to_cwd
+from utils.text import truncate_text
 
 # Rich allows us to define named styles that can be reused throughout the UI.
 #
@@ -118,6 +119,8 @@ class TUI:
         # Current working directory
         self.cwd = self.config.cwd
 
+        self._max_block_tokens = 240
+
     def begin_assistant(self) -> None:
         """
         Start displaying a new assistant response.
@@ -202,6 +205,7 @@ class TUI:
         # Define the preferred display order for commonly used tools.
         _PREFERRED_ORDER = {
             "read_file": ["path", "offset", "limit"],
+            "write_file": ["path", "create_directories", "content"],
         }
 
         # Get the preferred order for this tool
@@ -248,6 +252,20 @@ class TUI:
 
         # Display arguments in our preferred order.
         for key, value in self._ordered_args(tool_name, arguments):
+
+            # Large file contents or replacement strings can make a tool
+            # panel extremely large.
+            #
+            # We display a short summary for these arguments instead of
+            # printing the entire content inside the argument table.
+            if key in {"content", "old_string", "new_string"} and isinstance(
+                value, str
+            ):
+                line_count = len(value.splitlines())
+                byte_count = len(value.encode("utf-8", errors="replace"))
+
+                value = f"<{line_count} lines • {byte_count} bytes>"
+
             table.add_row(key, str(value))
 
         return table
@@ -401,6 +419,7 @@ class TUI:
         output: str,
         error: str | None,
         metadata: dict[str, Any] | None,
+        diff: str | None,
         truncated: bool,
     ) -> None:
         # Choose the tool's border style based on its category.
@@ -425,6 +444,9 @@ class TUI:
         if isinstance(metadata, dict) and isinstance(metadata.get("path"), str):
             primary_path = metadata.get("path")
 
+        # ---------------------------------------------------------------
+        # read_file
+        # ---------------------------------------------------------------
         if tool_name == "read_file" and success:
             if primary_path:
                 # Remove the line-number prefixes from the tool output
@@ -470,6 +492,28 @@ class TUI:
                         word_wrap=False,
                     )
                 )
+
+        # ---------------------------------------------------------------
+        # write_file
+        # ---------------------------------------------------------------
+        elif tool_name == "write_file" and success and diff:
+            output_line = output.strip() if output.strip() else "Completed"
+            blocks.append(Text(output_line, style="muted"))
+
+            diff_display = truncate_text(
+                diff,
+                self._max_block_tokens,
+                model=self.config.model,
+            )
+
+            blocks.append(
+                Syntax(
+                    diff_display,
+                    "diff",
+                    theme="monokai",
+                    word_wrap=True,
+                )
+            )
 
         if truncated:
             blocks.append(Text("note: tool output was truncated", style="warning"))
