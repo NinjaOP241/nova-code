@@ -1,3 +1,4 @@
+import difflib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from anyio import Path
@@ -36,6 +37,57 @@ class ToolKind(str, Enum):
     NETWORK = "network"
     MEMORY = "memory"
     MCP = "mcp"
+
+
+@dataclass
+class FileDiff:
+    """
+    Represents the changes made to a file.
+    """
+
+    # The path of the file that was changed.
+    path: Path
+
+    # The original content of the file before the change.
+    old_content: str
+
+    # The new content of the file after the change.
+    new_content: str
+
+    # Indicates that this is a newly created file
+    is_new_file: bool = False
+
+    # Indicates that this file is being deleted
+    is_deletion: bool = False
+
+    def to_diff(self) -> str:
+        """
+        Generate a unified diff between the original and updated content.
+        """
+
+        # Using keepends=True in splitlines() makes sure the \n is preserved in each line, often simplifying the difflib usage.
+        old_lines = self.old_content.splitlines(keepends=True)
+        new_lines = self.new_content.splitlines(keepends=True)
+
+        # Ensure the last line ends with a newline if it doesn't already, for the difflib to work correctly.
+        if old_lines and not old_lines[-1].endswith("\n"):
+            old_lines[-1] += "\n"
+
+        if new_lines and not new_lines[-1].endswith("\n"):
+            new_lines[-1] += "\n"
+
+        old_name = "/dev/null" if self.is_new_file else str(self.path)
+        new_name = "/dev/null" if self.is_deletion else str(self.path)
+
+        # Generate the unified diff
+        diff = difflib.unified_diff(
+            old_lines,
+            new_lines,
+            fromfile=old_name,
+            tofile=new_name,
+        )
+
+        return "".join(diff)
 
 
 @dataclass
@@ -88,6 +140,10 @@ class ToolResult:
 
     # Whether the output was truncated because it was too large.
     truncated: bool = False
+
+    # Optional file changes associated with this result.
+    # This allows the UI to display the actual changes made to a file.
+    diff: FileDiff | None = None
 
     @classmethod
     def error_result(cls, error: str, output: str = "", **kwargs: Any):

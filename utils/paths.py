@@ -39,6 +39,30 @@ def display_path_rel_to_cwd(path: str, cwd: Path | None) -> str:
     return str(p)
 
 
+def ensure_parent_directory(path: str | Path) -> Path:
+    """
+    Ensure that the parent directory of the given path exists.
+
+    If the parent directory does not exist, it will be created.
+    This is useful when writing files to ensure that the necessary
+    directories are in place before attempting to write the file.
+    """
+
+    path = Path(path)
+
+    # parent gives us the directory containing the requested file.
+    #
+    # For example:
+    # path = /project/src/main.py
+    # path.parent = /project/src
+    #
+    # parents=True creates any missing parent directories as well.
+    # exist_ok=True prevents an error if the directory already exists.
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    return path
+
+
 def is_binary_file(path: str | Path) -> bool:
     """
     Check whether a file is likely to be binary by looking for null bytes
