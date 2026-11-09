@@ -44,7 +44,7 @@ class Config(BaseModel):
 
     @property
     def api_key(self) -> str | None:
-        return os.environ.get("NOVA_API_KEY")
+        return os.environ.get("API_KEY")
 
     @property
     def base_url(self) -> str | None:
@@ -78,7 +78,7 @@ class Config(BaseModel):
         errors: list[str] = []
 
         if not self.api_key:
-            errors.append("No API key found. Set NOVA_API_KEY in your .env file")
+            errors.append("No API key found. Set API_KEY in your .env file")
 
         if not self.cwd.exists():
             errors.append(f"Working directory does not exist: {self.cwd}")
