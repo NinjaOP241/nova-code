@@ -206,6 +206,7 @@ class TUI:
         _PREFERRED_ORDER = {
             "read_file": ["path", "offset", "limit"],
             "write_file": ["path", "create_directories", "content"],
+            "edit_file": ["path", "replace_all", "old_string", "new_string"],
         }
 
         # Get the preferred order for this tool
@@ -494,9 +495,9 @@ class TUI:
                 )
 
         # ---------------------------------------------------------------
-        # write_file
+        # write_file / edit_file
         # ---------------------------------------------------------------
-        elif tool_name == "write_file" and success and diff:
+        elif tool_name in {"write_file", "edit_file"} and success and diff:
             output_line = output.strip() if output.strip() else "Completed"
             blocks.append(Text(output_line, style="muted"))
 
