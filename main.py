@@ -302,6 +302,7 @@ class CLI:
                     event.data.get("metadata"),
                     event.data.get("diff"),
                     event.data.get("truncated", False),
+                    event.data.get("exit_code"),
                 )
 
         # The Agent has finished yielding events for this message.

@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Any
+from config.config import Config
 from tools.base import Tool, ToolInvocation, ToolResult
 from tools.builtin import get_all_builtin_tools
 
@@ -221,7 +222,7 @@ class ToolRegistry:
         return result
 
 
-def create_default_registry() -> ToolRegistry:
+def create_default_registry(config: Config) -> ToolRegistry:
     """
     Create and populate a registry with the application's default tools.
 
@@ -244,6 +245,6 @@ def create_default_registry() -> ToolRegistry:
     # WriteFileTool(config)
     # ShellTool(config)
     for tool_class in get_all_builtin_tools():
-        registry.register_tool(tool_class())
+        registry.register_tool(tool_class(config))
 
     return registry

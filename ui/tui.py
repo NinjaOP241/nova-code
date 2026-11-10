@@ -207,6 +207,7 @@ class TUI:
             "read_file": ["path", "offset", "limit"],
             "write_file": ["path", "create_directories", "content"],
             "edit_file": ["path", "replace_all", "old_string", "new_string"],
+            "shell": ["command", "cwd", "timeout"],
         }
 
         # Get the preferred order for this tool
@@ -422,6 +423,7 @@ class TUI:
         metadata: dict[str, Any] | None,
         diff: str | None,
         truncated: bool,
+        exit_code: int | None,
     ) -> None:
         # Choose the tool's border style based on its category.
         border_style = f"tool.{tool_kind}" if tool_kind else "tool"
@@ -437,6 +439,9 @@ class TUI:
             ("  ", "muted"),
             (f"#{tool_call_id[:20]}", "muted"),
         )
+
+        # Retrieve the arguments saved when this tool call started.
+        arguments = self._tool_args_by_tool_call_id.get(tool_call_id, {})
 
         # Store the Rich renderable blocks that will appear in the tool result panel.
         blocks = []
@@ -504,13 +509,38 @@ class TUI:
             diff_display = truncate_text(
                 diff,
                 self._max_block_tokens,
-                model=self.config.model,
+                model=self.config.model_name,
             )
 
             blocks.append(
                 Syntax(
                     diff_display,
                     "diff",
+                    theme="monokai",
+                    word_wrap=True,
+                )
+            )
+
+        # ---------------------------------------------------------------
+        # shell
+        # ---------------------------------------------------------------
+        elif tool_name == "shell" and success:
+            command = arguments.get("command")
+            blocks.append(Text(f"$ {command.strip()}", style="muted"))
+
+            if exit_code is not None:
+                blocks.append(Text(f"exit_code={exit_code}", style="muted"))
+
+            output_display = truncate_text(
+                output,
+                self._max_block_tokens,
+                model=self.config.model_name,
+            )
+
+            blocks.append(
+                Syntax(
+                    output_display,
+                    "text",
                     theme="monokai",
                     word_wrap=True,
                 )

@@ -9,6 +9,8 @@ from typing import Any
 from pydantic import BaseModel, ValidationError
 from pydantic.json_schema import model_json_schema
 
+from config.config import Config
+
 
 class ToolKind(str, Enum):
     """
@@ -144,6 +146,9 @@ class ToolResult:
     # Optional file changes associated with this result.
     # This allows the UI to display the actual changes made to a file.
     diff: FileDiff | None = None
+
+    # Exit code returned by a shell command, if applicable.
+    exit_code: int | None = None
 
     @classmethod
     def error_result(cls, error: str, output: str = "", **kwargs: Any):
@@ -286,8 +291,13 @@ class Tool(ABC):
     description: str = "Base tool"
     kind: ToolKind = ToolKind.READ
 
-    def __init__(self) -> None:
-        pass
+    # Limit the amount of content returned to the LLM.
+    # Even if a file is within the size limit, its contents might be
+    # too large to fit comfortably in the model's context.
+    MAX_OUTPUT_TOKENS = 25000
+
+    def __init__(self, config: Config) -> None:
+        self.config = config
 
     @property
     def schema(self) -> dict[str, Any] | type["BaseModel"]:

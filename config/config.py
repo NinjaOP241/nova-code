@@ -19,6 +19,26 @@ class ModelConfig(BaseModel):
     context_window: int = 256_000
 
 
+DEFAULT_EXCLUDE_PATTERNS = [
+    "*KEY*",
+    "*TOKEN*",
+    "*SECRET*",
+]
+
+
+class ShellEnvironmentPolicy(BaseModel):
+    """
+    Controls which environment variables are passed to shell subprocesses.
+    """
+
+    ignore_default_excludes: bool = False
+
+    # Additional patterns supplied by the user.
+    exclude_patterns: list[str] = Field(default_factory=list)
+
+    set_vars: dict[str, str] = Field(default_factory=dict)
+
+
 class Config(BaseModel):
     """
     Central configuration for the AI agent.
@@ -31,6 +51,10 @@ class Config(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
 
     cwd: Path = Field(default_factory=Path.cwd)
+
+    shell_environment_policy: ShellEnvironmentPolicy = Field(
+        default_factory=ShellEnvironmentPolicy,
+    )
 
     # Maximum number of iterations the agentic loop can execute
     # while processing a single user request.

@@ -53,11 +53,6 @@ class ReadFileTool(Tool):
     # Don't attempt to read files larger than 10 MB.
     MAX_FILE_SIZE = 10 * 1024 * 1024
 
-    # Limit the amount of content returned to the LLM.
-    # Even if a file is within the size limit, its contents might be
-    # too large to fit comfortably in the model's context.
-    MAX_OUTPUT_TOKENS = 25000
-
     async def execute(self, invocation: ToolInvocation) -> ToolResult:
         # Convert the raw arguments into a Pydantic model.
         # This validates the arguments and applies defaults for omitted

@@ -33,7 +33,7 @@ class Session:
         self.client = LLMClient(config)
 
         # Create the registry containing the tools the agent can use.
-        self.tool_registry = create_default_registry()
+        self.tool_registry = create_default_registry(config)
 
         self.context_manager = ContextManager(config)
 
