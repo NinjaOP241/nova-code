@@ -9,7 +9,7 @@ from utils.paths import resolve_path
 
 class EditParams(BaseModel):
     """
-    A pydantic model that defines the arguments accepted by EditTool.
+    A pydantic model that defines the arguments accepted by EditFileTool.
     """
 
     path: str = Field(
@@ -44,7 +44,7 @@ class EditParams(BaseModel):
         return self
 
 
-class EditTool(Tool):
+class EditFileTool(Tool):
     """
     Make precise modifications to an existing file.
 
