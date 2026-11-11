@@ -212,6 +212,7 @@ class TUI:
             "grep": ["path", "pattern", "case_sensitive"],
             "glob": ["path", "pattern"],
             "web_search": ["query", "max_results", "timelimit"],
+            "web_fetch": ["url", "timeout"],
         }
 
         # Get the preferred order for this tool
@@ -650,6 +651,38 @@ class TUI:
             summary = [
                 f"query: {query}",
                 f"{results} results",
+            ]
+
+            if summary:
+                blocks.append(Text(" • ".join(summary), style="muted"))
+
+            output_display = truncate_text(
+                output,
+                self._max_block_tokens,
+                model=self.config.model_name,
+            )
+
+            blocks.append(
+                Syntax(
+                    output_display,
+                    "text",
+                    theme="monokai",
+                    word_wrap=True,
+                )
+            )
+
+        # ---------------------------------------------------------------
+        # web_fetch
+        # ---------------------------------------------------------------
+        elif tool_name == "web_fetch" and success:
+            url = arguments.get("url")
+            status_code = metadata.get("status_code")
+            content_length = metadata.get("content_length")
+
+            summary = [
+                f"Status Code: {status_code}",
+                f"Content Length: {content_length} bytes",
+                f"URL: {url}",
             ]
 
             if summary:
