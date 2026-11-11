@@ -211,6 +211,7 @@ class TUI:
             "list_dir": ["path", "include_hidden"],
             "grep": ["path", "pattern", "case_sensitive"],
             "glob": ["path", "pattern"],
+            "web_search": ["query", "max_results", "timelimit"],
         }
 
         # Get the preferred order for this tool
@@ -619,6 +620,36 @@ class TUI:
             summary = [
                 f"{matches} matches",
                 f"searched {path}",
+            ]
+
+            if summary:
+                blocks.append(Text(" • ".join(summary), style="muted"))
+
+            output_display = truncate_text(
+                output,
+                self._max_block_tokens,
+                model=self.config.model_name,
+            )
+
+            blocks.append(
+                Syntax(
+                    output_display,
+                    "text",
+                    theme="monokai",
+                    word_wrap=True,
+                )
+            )
+
+        # ---------------------------------------------------------------
+        # web_search
+        # ---------------------------------------------------------------
+        elif tool_name == "web_search" and success:
+            results = metadata.get("results")
+            query = arguments.get("query")
+
+            summary = [
+                f"query: {query}",
+                f"{results} results",
             ]
 
             if summary:
