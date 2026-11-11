@@ -96,8 +96,9 @@ class GrepTool(Tool):
         #
         # 2. The requested path is a single file:
         #    Search only that particular file.
+        truncated = False
         if search_path.is_dir():
-            files = self._find_files(search_path)
+            files, truncated = self._find_files(search_path)
         else:
             files = [] if is_binary_file(search_path) else [search_path]
 
@@ -158,6 +159,9 @@ class GrepTool(Tool):
             else f"No matches found for pattern '{params.pattern}' in {search_path}"
         )
 
+        if truncated:
+            output += "\n... (truncated, searched first 500 files only)"
+
         return ToolResult.success_result(
             output,
             metadata={
@@ -167,7 +171,7 @@ class GrepTool(Tool):
             },
         )
 
-    def _find_files(self, search_path: Path) -> list[Path]:
+    def _find_files(self, search_path: Path) -> tuple[list[Path], bool]:
         """
         Recursively finds all files in the given directory.
         """
@@ -210,6 +214,6 @@ class GrepTool(Tool):
                     files.append(file_path)
 
                     if len(files) >= 500:
-                        return files
+                        return files, True
 
-        return files
+        return files, False
