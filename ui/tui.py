@@ -208,6 +208,7 @@ class TUI:
             "write_file": ["path", "create_directories", "content"],
             "edit_file": ["path", "replace_all", "old_string", "new_string"],
             "shell": ["command", "cwd", "timeout"],
+            "list_dir": ["path", "include_hidden"],
         }
 
         # Get the preferred order for this tool
@@ -545,6 +546,57 @@ class TUI:
                     word_wrap=True,
                 )
             )
+
+        # ---------------------------------------------------------------
+        # list_dir
+        # ---------------------------------------------------------------
+        elif tool_name == "list_dir" and success:
+            entries = metadata.get("entries")
+            path = metadata.get("path")
+
+            summary = [
+                path,
+                f"{entries} entries",
+            ]
+
+            if summary:
+                blocks.append(Text(" • ".join(summary), style="muted"))
+
+            output_display = truncate_text(
+                output,
+                self._max_block_tokens,
+                model=self.config.model_name,
+            )
+
+            blocks.append(
+                Syntax(
+                    output_display,
+                    "text",
+                    theme="monokai",
+                    word_wrap=True,
+                )
+            )
+
+        if error and not success:
+            blocks.append(Text(error, style="error"))
+
+            output_display = truncate_text(
+                output,
+                self._max_block_tokens,
+                model=self.config.model_name,
+            )
+
+            if output_display.strip():
+                blocks.append(
+                    Syntax(
+                        output_display,
+                        "text",
+                        theme="monokai",
+                        word_wrap=True,
+                    )
+                )
+            else:
+                blocks.append(Text("(no output)", style="muted"))
 
         if truncated:
             blocks.append(Text("note: tool output was truncated", style="warning"))
