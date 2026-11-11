@@ -119,7 +119,7 @@ class TUI:
         # Current working directory
         self.cwd = self.config.cwd
 
-        self._max_block_tokens = 240
+        self._max_block_tokens = 2500
 
     def begin_assistant(self) -> None:
         """
@@ -209,6 +209,7 @@ class TUI:
             "edit_file": ["path", "replace_all", "old_string", "new_string"],
             "shell": ["command", "cwd", "timeout"],
             "list_dir": ["path", "include_hidden"],
+            "grep": ["path", "pattern", "case_sensitive"],
         }
 
         # Get the preferred order for this tool
@@ -557,6 +558,36 @@ class TUI:
             summary = [
                 path,
                 f"{entries} entries",
+            ]
+
+            if summary:
+                blocks.append(Text(" • ".join(summary), style="muted"))
+
+            output_display = truncate_text(
+                output,
+                self._max_block_tokens,
+                model=self.config.model_name,
+            )
+
+            blocks.append(
+                Syntax(
+                    output_display,
+                    "text",
+                    theme="monokai",
+                    word_wrap=True,
+                )
+            )
+
+        # ---------------------------------------------------------------
+        # grep
+        # ---------------------------------------------------------------
+        elif tool_name == "grep" and success:
+            matching_lines = metadata.get("matching_lines")
+            files_searched = metadata.get("files_searched")
+
+            summary = [
+                f"{matching_lines} matching lines",
+                f"searched {files_searched} files",
             ]
 
             if summary:
