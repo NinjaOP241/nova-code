@@ -1,8 +1,10 @@
 from datetime import datetime
+import json
 import uuid
 
 from client.llm_client import LLMClient
 from config.config import Config
+from config.loader import get_data_dir
 from context.manager import ContextManager
 from tools.registry import create_default_registry
 
@@ -22,7 +24,7 @@ class Session:
     organized in one place.
     """
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config) -> None:
         # Keep the configuration used throughout this session.
         # Other components receive this same configuration so they
         # follow the same model, working directory, and other settings.
@@ -35,7 +37,11 @@ class Session:
         # Create the registry containing the tools the agent can use.
         self.tool_registry = create_default_registry(config)
 
-        self.context_manager = ContextManager(config)
+        self.context_manager = ContextManager(
+            config,
+            self._load_memory(),
+            self.tool_registry.get_tools(),
+        )
 
         # Generate a unique identifier for this session.
         self.session_id = str(uuid.uuid4())
@@ -51,6 +57,30 @@ class Session:
         # Incremented each time the Agent starts a new iteration and used for
         # reporting session statistics.
         self._turn_count = 0
+
+    def _load_memory(self) -> str | None:
+        data_dir = get_data_dir()
+        data_dir.mkdir(parents=True, exist_ok=True)
+        memory_file_path = data_dir / "user_memory.json"
+
+        if not memory_file_path.exists():
+            return None
+
+        try:
+            content = memory_file_path.read_text(encoding="utf-8")
+            data = json.loads(content)
+            entries = data.get("entries")
+
+            if not entries:
+                return None
+
+            lines = ["User preferences and notes:"]
+            for key, value in entries.items():
+                lines.append(f"- {key}: {value}")
+
+            return "\n".join(lines)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as e:
+            return None
 
     def increment_turn(self) -> int:
         """
