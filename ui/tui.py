@@ -214,6 +214,7 @@ class TUI:
             "web_search": ["query", "max_results", "timelimit"],
             "web_fetch": ["url", "timeout"],
             "todos": ["id", "action", "content"],
+            "memory": ["action", "key", "value"],
         }
 
         # Get the preferred order for this tool
@@ -663,6 +664,79 @@ class TUI:
                     blocks.append(Text("Cleared all tasks", style="success"))
                 else:
                     blocks.append(Text(output.strip(), style="muted"))
+
+        # ---------------------------------------------------------------
+        # memory
+        # ---------------------------------------------------------------
+        elif tool_name == "memory" and success:
+            action = arguments.get("action")
+
+            if action == "list":
+                entries = metadata.get("entries")
+
+                memory_table = Table(
+                    box=box.SIMPLE,
+                    border_style="border",
+                    expand=True,
+                    show_header=True,
+                )
+                memory_table.add_column(
+                    "Key",
+                    style="highlight",
+                    no_wrap=True,
+                )
+                memory_table.add_column("Value", style="code")
+
+                for key, value in entries.items():
+                    memory_table.add_row(str(key), str(value))
+
+                blocks.append(
+                    Text(
+                        f"{metadata.get('memory_count', len(entries))} "
+                        "stored memories",
+                        style="muted",
+                    )
+                )
+                blocks.append(memory_table)
+
+            elif action == "get":
+                key = metadata.get("key", arguments.get("key", "unknown"))
+                value = metadata.get("value")
+                if metadata.get("found") and value is not None:
+                    blocks.append(
+                        Panel(
+                            Text(str(value), style="code"),
+                            title=Text(str(key), style="highlight"),
+                            border_style="border",
+                            box=box.ROUNDED,
+                            padding=(0, 1),
+                        )
+                    )
+                else:
+                    blocks.append(Text(output.strip(), style="muted"))
+            elif action == "set":
+                blocks.append(
+                    Text(
+                        f"Saved memory: {metadata.get('key', arguments.get('key', 'unknown'))}",
+                        style="success",
+                    )
+                )
+            elif action == "delete":
+                blocks.append(
+                    Text(
+                        f"Deleted memory: {metadata.get('key', arguments.get('key', 'unknown'))}",
+                        style="success",
+                    )
+                )
+            elif action == "clear":
+                blocks.append(
+                    Text(
+                        f"Cleared {metadata.get('cleared_count', 0)} memories",
+                        style="success",
+                    )
+                )
+            else:
+                blocks.append(Text(output.strip(), style="muted"))
 
         # ---------------------------------------------------------------
         # glob

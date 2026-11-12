@@ -3,7 +3,7 @@ from importlib.resources import path
 from pathlib import Path
 from typing import Any
 
-from platformdirs import user_config_dir
+from platformdirs import user_config_dir, user_data_dir
 import tomli
 from dotenv import load_dotenv
 
@@ -33,6 +33,10 @@ def get_config_dir() -> Path:
     """
 
     return Path(user_config_dir("nova-code", appauthor=False))
+
+
+def get_data_dir() -> Path:
+    return Path(user_data_dir("nova-code", appauthor=False))
 
 
 def get_system_config_path() -> Path:
