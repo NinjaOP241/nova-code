@@ -29,7 +29,7 @@ class ToolRegistry:
     responsibilities to this registry.
     """
 
-    def __init__(self):
+    def __init__(self, config: Config) -> None:
         # Stores regular tools, using their names as dictionary keys.
         #
         # Example:
@@ -42,6 +42,8 @@ class ToolRegistry:
         # We store actual Python objects here because we need their
         # execute() methods when the LLM requests a tool.
         self._tools: dict[str, Tool] = {}
+
+        self.config = config
 
     def register_tool(self, tool: Tool) -> None:
         """
@@ -114,12 +116,21 @@ class ToolRegistry:
         to determine which tools should actually be available to the Agent.
         """
 
-        # Start with an empty list where we will collect tool instances.
-        tools: list[Tool] = []
+        all_tools: list[Tool] = [
+            *self._tools.values(),
+        ]
 
-        # Add all regular application tools.
-        for tool in self._tools.values():
-            tools.append(tool)
+        # None means there is no allowlist restriction.
+        # Therefore, return every registered tool.
+        if self.config.allowed_tools is None:
+            return all_tools
+
+        # Filter the tools to only include those that are allowed.
+        tools: list[Tool] = []
+        for tool_name in self.config.allowed_tools:
+            tool = self.get(tool_name)
+            if tool:
+                tools.append(tool)
 
         return tools
 
@@ -233,7 +244,7 @@ def create_default_registry(config: Config) -> ToolRegistry:
     """
 
     # Create a new registry with the application configuration.
-    registry = ToolRegistry()
+    registry = ToolRegistry(config)
 
     # Get all built-in tool classes and register an instance of each.
     #

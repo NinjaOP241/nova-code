@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 import uuid
 
+from agent.types import AgentName
 from client.llm_client import LLMClient
 from config.config import Config
 from config.loader import get_data_dir
@@ -24,7 +25,9 @@ class Session:
     organized in one place.
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(
+        self, config: Config, agent_name: AgentName = AgentName.MAIN_AGENT
+    ) -> None:
         # Keep the configuration used throughout this session.
         # Other components receive this same configuration so they
         # follow the same model, working directory, and other settings.
@@ -41,6 +44,7 @@ class Session:
             config,
             self._load_memory(),
             self.tool_registry.get_tools(),
+            agent_name,
         )
 
         # Generate a unique identifier for this session.

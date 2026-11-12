@@ -1,8 +1,10 @@
+from dataclasses import dataclass
 import json
 from typing import AsyncGenerator
 
 from agent.events import AgentEvent, AgentEventType
 from agent.session import Session
+from agent.types import AgentName
 from client.response import StreamEventType, ToolCall
 from config.config import Config
 
@@ -12,9 +14,13 @@ class Agent:
     Coordinates the LLM, tools, and conversation history to complete a task.
     """
 
-    def __init__(self, config: Config):
+    def __init__(
+        self,
+        config: Config,
+        agent_name: AgentName = AgentName.MAIN_AGENT,
+    ) -> None:
         self.config = config
-        self.session: Session | None = Session(config)
+        self.session: Session | None = Session(config, agent_name)
 
     async def run(self, message: str) -> AsyncGenerator[AgentEvent, None]:
         """
@@ -147,6 +153,9 @@ class Agent:
                     tool_call.tool_call_id,
                     result.to_model_output(),
                 )
+
+        # Reaching this point means the Agent exhausted its allowed turns.
+        yield AgentEvent.agent_error(f"Reached maximum number of turns: {max_turns}")
 
     async def __aenter__(self) -> Agent:
         """Initialize the agent's session before use.

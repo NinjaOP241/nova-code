@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from agent.types import AgentName
 from config.config import Config
-from prompts.system import get_system_prompt
+from prompts.main_agent import get_main_agent_system_prompt
+from prompts.subagent import get_subagent_system_prompt
 from tools.base import Tool
 from utils.text import count_tokens
 
@@ -73,8 +75,13 @@ class ContextManager:
         config: Config,
         user_memory: str | None = None,
         tools: list[Tool] | None = None,
+        agent_name: AgentName = AgentName.MAIN_AGENT,
     ) -> None:
-        self._system_prompt = get_system_prompt(config, user_memory, tools)
+        self._system_prompt = (
+            get_main_agent_system_prompt(config, user_memory, tools)
+            if agent_name == AgentName.MAIN_AGENT
+            else get_subagent_system_prompt(agent_name, tools)
+        )
         self.config = config
         self._model_name = config.model_name
 

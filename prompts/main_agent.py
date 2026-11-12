@@ -7,7 +7,7 @@ from config.config import Config
 from tools.base import Tool
 
 
-def get_system_prompt(
+def get_main_agent_system_prompt(
     config,
     user_memory: str | None = None,
     tools: list[Tool] | None = None,

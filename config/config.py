@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -60,6 +61,9 @@ class Config(BaseModel):
     # while processing a single user request.
     max_turns: int = 100
 
+    # A list of allowed tool names for the agent. If None, all tools are allowed.
+    allowed_tools: list[str] | None = None
+
     developer_instructions: str | None = None
     user_instructions: str | None = None
 
@@ -108,3 +112,6 @@ class Config(BaseModel):
             errors.append(f"Working directory does not exist: {self.cwd}")
 
         return errors
+
+    def to_dict(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
