@@ -52,16 +52,16 @@ class MessageItem:
         """
 
         # Every message must have a role.
-        result: dict[str, Any] = {"role": self.role}
+        result: dict[str, Any] = {
+            "role": self.role,
+            "content": self.content or "",
+        }
 
         if self.tool_call_id:
             result["tool_call_id"] = self.tool_call_id
 
         if self.tool_calls:
             result["tool_calls"] = self.tool_calls
-
-        if self.content:
-            result["content"] = self.content
 
         return result
 

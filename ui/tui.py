@@ -213,6 +213,7 @@ class TUI:
             "glob": ["path", "pattern"],
             "web_search": ["query", "max_results", "timelimit"],
             "web_fetch": ["url", "timeout"],
+            "todos": ["id", "action", "content"],
         }
 
         # Get the preferred order for this tool
@@ -610,6 +611,58 @@ class TUI:
                     word_wrap=True,
                 )
             )
+
+        # ---------------------------------------------------------------
+        # todos
+        # ---------------------------------------------------------------
+        elif tool_name == "todos" and success:
+            action = arguments.get("action")
+            todos_count = metadata.get("todos_count")
+
+            if action == "list" and todos_count > 0:
+                todo_table = Table(
+                    box=box.SIMPLE,
+                    border_style="border",
+                    expand=True,
+                    show_header=True,
+                )
+                todo_table.add_column("ID", style="highlight", no_wrap=True)
+                todo_table.add_column("Task", style="code")
+
+                todo_rows = 0
+                for line in output.splitlines()[1:]:
+                    match = re.match(r"- \[([^\]]+)\]:\s*(.*)", line)
+                    if match:
+                        todo_table.add_row(match.group(1), match.group(2))
+                        todo_rows += 1
+
+                if todo_rows:
+                    blocks.append(Text("Task list", style="muted"))
+                    blocks.append(todo_table)
+                else:
+                    blocks.append(Text("No todos.", style="muted"))
+            else:
+                content = arguments.get("content")
+                todo_id = arguments.get("id")
+
+                if action == "add":
+                    blocks.append(
+                        Text(
+                            f"Added task: {content or '(no description)'}",
+                            style="success",
+                        )
+                    )
+                elif action == "complete":
+                    blocks.append(
+                        Text(
+                            f"Completed task: {todo_id or '(unknown id)'}",
+                            style="success",
+                        )
+                    )
+                elif action == "clear":
+                    blocks.append(Text("Cleared all tasks", style="success"))
+                else:
+                    blocks.append(Text(output.strip(), style="muted"))
 
         # ---------------------------------------------------------------
         # glob
